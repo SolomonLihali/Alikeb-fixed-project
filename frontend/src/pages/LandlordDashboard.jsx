@@ -7,7 +7,8 @@ export default function LandlordDashboard() {
   const [payments, setPayments] = useState([]);
 
   useEffect(() => {
-    axios.get(`/api/payments?month=${month}`).then((res) => setPayments(res.data));
+    axios.get(`https://alikeb-backend.onrender.com/api/payments?month=${month}`)
+.then((res) => setPayments(res.data));
   }, [month]);
 
   const exportToExcel = () => {
