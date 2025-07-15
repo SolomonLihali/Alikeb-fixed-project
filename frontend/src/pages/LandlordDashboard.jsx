@@ -1,61 +1,94 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import * as XLSX from "xlsx";
 
 export default function LandlordDashboard() {
-  const [month, setMonth] = useState("2025-07");
-  const [payments, setPayments] = useState([]);
+  const [summary, setSummary] = useState({});
+  const [units, setUnits] = useState([]);
+  const [newUnit, setNewUnit] = useState({ name: "", rent: "" });
 
   useEffect(() => {
-    axios.get(`https://alikeb-backend.onrender.com/api/payments?month=${month}`)
-.then((res) => setPayments(res.data));
-  }, [month]);
+    axios.get("/api/landlord/summary").then(res => setSummary(res.data));
+    axios.get("/api/landlord/units").then(res => setUnits(res.data));
+  }, []);
 
-  const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(payments);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
-    XLSX.writeFile(workbook, `Payments-${month}.xlsx`);
+  const addUnit = async (e) => {
+    e.preventDefault();
+    await axios.post("/api/landlord/units", newUnit);
+    const updated = await axios.get("/api/landlord/units");
+    setUnits(updated.data);
+    setNewUnit({ name: "", rent: "" });
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Landlord Dashboard</h1>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6 text-blue-700">Landlord Dashboard</h1>
 
-      <input
-        type="month"
-        value={month}
-        onChange={(e) => setMonth(e.target.value)}
-        className="border p-2 rounded mb-4"
-      />
+        {/* SUMMARY CARDS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white p-4 rounded-xl shadow-md text-center">
+            <p className="text-sm text-gray-500">Monthly Income</p>
+            <p className="text-xl font-bold text-green-600">KES {summary.monthly_income || 0}</p>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-md text-center">
+            <p className="text-sm text-gray-500">Unpaid Rent</p>
+            <p className="text-xl font-bold text-red-600">KES {summary.unpaid_rent || 0}</p>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-md text-center">
+            <p className="text-sm text-gray-500">Active Tenants</p>
+            <p className="text-xl font-bold">{summary.total_tenants || 0}</p>
+          </div>
+        </div>
 
-      <button
-        onClick={exportToExcel}
-        className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
-      >
-        Export to Excel
-      </button>
+        {/* ADD UNIT FORM */}
+        <div className="bg-white p-6 rounded-xl shadow-md mb-8">
+          <h2 className="text-lg font-semibold mb-4">Add New Unit</h2>
+          <form onSubmit={addUnit} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <input
+              type="text"
+              placeholder="Unit Name (e.g. A1)"
+              value={newUnit.name}
+              onChange={(e) => setNewUnit({ ...newUnit, name: e.target.value })}
+              required
+              className="border p-2 rounded"
+            />
+            <input
+              type="number"
+              placeholder="Monthly Rent (KES)"
+              value={newUnit.rent}
+              onChange={(e) => setNewUnit({ ...newUnit, rent: e.target.value })}
+              required
+              className="border p-2 rounded"
+            />
+            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+              Add Unit
+            </button>
+          </form>
+        </div>
 
-      <table className="w-full border">
-        <thead className="bg-gray-200">
-          <tr>
-            <th>Name</th>
-            <th>Unit</th>
-            <th>Amount Paid</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {payments.map((p, index) => (
-            <tr key={index} className="border-t">
-              <td>{p.name}</td>
-              <td>{p.unit}</td>
-              <td>{p.amount}</td>
-              <td>{p.payment_date?.split("T")[0]}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        {/* UNITS LIST */}
+        <div className="bg-white p-6 rounded-xl shadow-md">
+          <h2 className="text-lg font-semibold mb-4">Units</h2>
+          <table className="w-full text-sm border">
+            <thead className="bg-blue-100">
+              <tr>
+                <th className="text-left p-2">Unit</th>
+                <th className="text-left p-2">Rent</th>
+                <th className="text-left p-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {units.map((unit, index) => (
+                <tr key={index} className="border-t">
+                  <td className="p-2">{unit.name}</td>
+                  <td className="p-2">KES {unit.rent}</td>
+                  <td className="p-2">{unit.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
