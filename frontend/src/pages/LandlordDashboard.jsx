@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from "recharts";
+
+import axios from "axios";
 
 export default function LandlordDashboard() {
   const [summary, setSummary] = useState({});
@@ -39,6 +44,20 @@ export default function LandlordDashboard() {
             <p className="text-xl font-bold">{summary.total_tenants || 0}</p>
           </div>
         </div>
+
+        {/* MONTHLY RENT CHART */}
+<div className="bg-white p-6 rounded-xl shadow-md mb-8">
+  <h2 className="text-lg font-semibold mb-4">Monthly Rent Collected</h2>
+  <ResponsiveContainer width="100%" height={300}>
+    <LineChart data={summary.monthly_chart || []}>
+      <CartesianGrid stroke="#ccc" />
+      <XAxis dataKey="month" />
+      <YAxis />
+      <Tooltip />
+      <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} />
+    </LineChart>
+  </ResponsiveContainer>
+</div>
 
         {/* ADD UNIT FORM */}
         <div className="bg-white p-6 rounded-xl shadow-md mb-8">
